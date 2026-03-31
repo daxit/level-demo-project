@@ -1,0 +1,15 @@
+{
+  "$schema": "../node_modules/oxlint/configuration_schema.json",
+  "extends": ["../.oxlintrc.json"],
+  "plugins": [],
+  "rules": {},
+  "settings": {
+    "react": {
+      "formComponents": [],
+      "linkComponents": [],
+      "version": null,
+      "componentWrapperFunctions": []
+    }
+  },
+  "ignorePatterns": ["**/routeTree.gen.ts"]
+}

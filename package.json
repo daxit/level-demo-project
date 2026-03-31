@@ -1,0 +1,27 @@
+{
+  "name": "level-automation-rules-builder",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "typecheck": "pnpm --filter @acme/ui typecheck && pnpm --filter @acme/api typecheck",
+    "test": "pnpm --filter @acme/ui test && pnpm --filter @acme/api test",
+    "dev:ui": "pnpm --filter @acme/ui dev",
+    "start:api": "pnpm --filter @acme/api start"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "oxfmt": "catalog:",
+    "oxlint": "catalog:",
+    "oxlint-tsgolint": "catalog:",
+    "typescript": "catalog:"
+  },
+  "engines": {
+    "node": "24.x",
+    "pnpm": ">=10"
+  },
+  "packageManager": "pnpm@10.33.0"
+}

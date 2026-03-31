@@ -1,0 +1,11 @@
+packages:
+  - api
+  - ui
+
+catalog:
+  '@types/node': ^24.12.0
+  oxfmt: ^0.42.0
+  oxlint: ^1.57.0
+  oxlint-tsgolint: ^0.17.4
+  typescript: ^6.0.2
+  vitest: ^4.1.2

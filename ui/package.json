@@ -1,0 +1,36 @@
+{
+  "name": "@acme/ui",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "test": "echo \"Error: no test specified\" && exit 0"
+  },
+  "dependencies": {
+    "@apollo/client": "^4.1.6",
+    "@tailwindcss/vite": "^4.2.2",
+    "@tanstack/react-router": "^1.168.8",
+    "graphql": "^16.13.2",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "rxjs": "^7.8.2",
+    "tailwindcss": "^4.2.2"
+  },
+  "devDependencies": {
+    "@tanstack/router-plugin": "^1.167.10",
+    "@types/node": "catalog:",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "oxfmt": "catalog:",
+    "oxlint": "catalog:",
+    "oxlint-tsgolint": "catalog:",
+    "typescript": "catalog:",
+    "vite": "^8.0.2",
+    "vitest": "catalog:"
+  }
+}
