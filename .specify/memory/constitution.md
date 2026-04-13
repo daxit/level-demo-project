@@ -1,50 +1,156 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!--
+Sync Impact Report
+- Version change: 0.0.0 → 1.0.0
+- Modified principles: N/A (initial population)
+- Added sections: Core Principles (7), Technology Stack & Architecture, UI Constraints & Git Workflow, Governance
+- Removed sections: None
+- Templates requiring updates:
+  - .specify/templates/plan-template.md — ✅ no conflict (generic scaffold; Constitution Check section will reference these principles at plan time)
+  - .specify/templates/spec-template.md — ✅ no conflict (generic scaffold)
+  - .specify/templates/tasks-template.md — ✅ no conflict (generic scaffold; testing phase will reflect Principle VI at task generation time)
+- Follow-up TODOs: None
+-->
+
+# Level Automation Rule Builder Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Generated Types as Source of Truth
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+GraphQL Code Generator (`@graphql-codegen/cli` with `client-preset`) MUST be the
+sole source of API types. Hand-rolled type definitions that duplicate the schema
+are prohibited. No intermediary type-mapping layer is permitted except for the
+condition tree UI state, which uses a local recursive type with a pure transform
+function to convert between UI and API shapes at mutation time.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+### II. Backend Boundary
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+The `api/` directory and the GraphQL schema it exposes are read-only. No changes
+to resolvers, type definitions, seed data, or server configuration are permitted.
+All work occurs in the `ui/` package. The API endpoint is
+`http://localhost:4000/graphql`.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### III. State Segregation
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+Server state MUST live in the Apollo Client cache. Form state MUST be managed by
+`react-hook-form` (with `useFieldArray` for the condition tree and actions list).
+Transient UI state (drawers, selections, toggles) uses `useState` only. No Redux,
+no Zustand, no other global state libraries are permitted.
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+### IV. Strict TypeScript
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+TypeScript strict mode MUST be enabled. The `any` type is prohibited everywhere —
+source files, test files, and utility code. Escape hatches (`@ts-ignore`,
+`@ts-expect-error` without an accompanying fix) are not allowed.
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+### V. Accessibility by Default
+
+All interactive controls (selects, dialogs, switches) MUST use Radix UI
+primitives (`@radix-ui/react-select`, `@radix-ui/react-dialog`,
+`@radix-ui/react-switch`) styled with Tailwind v4. Semantic HTML elements MUST be
+used where appropriate. Custom div-based controls that duplicate native semantics
+are prohibited.
+
+### VI. Minimal Testing, Maximum Confidence
+
+Unit tests are required only on the condition tree transform function — a pure
+function that converts between the local UI tree type and the generated API input
+type. No component tests, no Playwright, no Storybook. The transform tests MUST
+cover round-trip fidelity, nested groups, and edge cases (empty tree, single
+condition).
+
+### VII. Simplicity
+
+YAGNI governs all decisions. No abstraction layers, wrapper components, or utility
+libraries beyond what is explicitly listed in the stack. The project budget is 4–6
+hours; every addition MUST justify its cost. Start with the simplest approach and
+refactor only when a concrete problem emerges.
+
+## Technology Stack & Architecture
+
+### Locked Stack (do not modify or replace)
+
+- **React** + **TypeScript** — UI framework
+- **Apollo Client** — GraphQL client and cache
+- **Tailwind CSS v4** — utility-first styling
+- **TanStack Router** — file-based routing
+- **Vite** — build tooling
+- **oxlint** + **oxfmt** — linting and formatting
+- **pnpm** monorepo — package management
+
+### Additional Libraries
+
+- `@graphql-codegen/cli` + `client-preset` — typed hooks and types from the local schema
+- `zod` — runtime validation on all form inputs
+- `react-hook-form` — form state management
+- `@radix-ui/react-select`, `@radix-ui/react-dialog`, `@radix-ui/react-switch` — accessible primitives
+- `@dnd-kit/sortable` — drag-to-reorder for the actions list only
+- `date-fns` — relative time formatting in the automation list
+- `clsx` or a `cn` utility — conditional Tailwind class merging
+
+### Architecture Rules
+
+- All GraphQL queries and mutations MUST be wrapped in custom hooks under `hooks/`. Components MUST NOT import `@apollo/client` directly.
+- Apollo error link middleware MUST be configured for global console logging. Mutation-specific UX responses use local `onError` handlers.
+- Generated types from GraphQL Code Generator are canonical. No hand-rolled API types exist outside the condition tree UI state divergence described in Principle I.
+
+### Out of Scope — Explicitly Excluded
+
+- Backend changes of any kind
+- Pagination, server-side sorting, filtering
+- Audit trail / history
+- Queue systems for email or script execution
+
+## UI Constraints & Git Workflow
+
+### Layout
+
+- Gmail-style master-detail: list compresses to a fixed width when an automation is selected.
+- WHEN / IF / THEN single-page rule builder — no tabs separating trigger, conditions, and actions.
+- Progressive disclosure: trigger and action configs open in a side drawer; condition tree renders inline.
+- Enabled toggle is a standalone interaction and MUST NOT require opening the rule builder.
+
+### Branch Naming
+
+```
+feat/short-description
+fix/short-description
+chore/short-description
+refactor/short-description
+```
+
+Lowercase, hyphen-separated, no slashes beyond the prefix.
+
+### Commit Format
+
+Conventional commits, lowercase, imperative tense, no trailing period:
+
+```
+feat: add automation list view
+fix: correct threshold duration conversion
+chore: configure graphql codegen
+refactor: extract condition tree transform
+```
+
+Each commit represents a complete vertical slice with clear scope.
+
+### Pull Request Convention
+
+Title matches the branch prefix and description in title case. Body contains:
+
+- **What** — one sentence describing what was built or changed
+- **Why** — one sentence on the decision or tradeoff worth calling out
+- **How to test** — steps to verify locally, including required API state
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+This constitution supersedes ad-hoc decisions. All implementation work MUST
+comply with the principles above. If a principle blocks progress, the principle
+MUST be amended here first — not silently bypassed.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+Versioning follows semantic versioning:
+- **MAJOR** — principle removed or redefined incompatibly
+- **MINOR** — new principle or section added, or material expansion
+- **PATCH** — wording clarifications, typo fixes
+
+**Version**: 1.0.0 | **Ratified**: 2026-04-12 | **Last Amended**: 2026-04-12
