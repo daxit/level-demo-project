@@ -45,9 +45,9 @@ source files, test files, and utility code. Escape hatches (`@ts-ignore`,
 
 ### V. Accessibility by Default
 
-All interactive controls (selects, dialogs, switches) MUST use Radix UI
-primitives (`@radix-ui/react-select`, `@radix-ui/react-dialog`,
-`@radix-ui/react-switch`) styled with Tailwind v4. Semantic HTML elements MUST be
+All interactive controls (selects, switches) MUST use Radix UI
+primitives (`@radix-ui/react-select`, `@radix-ui/react-switch`) styled with
+Tailwind v4. Semantic HTML elements MUST be
 used where appropriate. Custom div-based controls that duplicate native semantics
 are prohibited.
 
@@ -83,7 +83,7 @@ refactor only when a concrete problem emerges.
 - `@graphql-codegen/cli` + `client-preset` — typed hooks and types from the local schema
 - `zod` — runtime validation on all form inputs
 - `react-hook-form` — form state management
-- `@radix-ui/react-select`, `@radix-ui/react-dialog`, `@radix-ui/react-switch` — accessible primitives
+- `@radix-ui/react-select`, `@radix-ui/react-switch` — accessible primitives
 - `@dnd-kit/sortable` — drag-to-reorder for the actions list only
 - `date-fns` — relative time formatting in the automation list
 - `clsx` or a `cn` utility — conditional Tailwind class merging
@@ -107,8 +107,21 @@ refactor only when a concrete problem emerges.
 
 - Gmail-style master-detail: list compresses to a fixed width when an automation is selected.
 - WHEN / IF / THEN single-page rule builder — no tabs separating trigger, conditions, and actions.
-- Progressive disclosure: trigger and action configs open in a side drawer; condition tree renders inline.
+- Progressive disclosure: trigger, condition, and action configs are all edited inline in the detail panel — no separate drawers or modals.
 - Enabled toggle is a standalone interaction and MUST NOT require opening the rule builder.
+
+### Loading States
+
+Skeleton placeholder UI MUST be used for **initial content loads only** — when
+a location in the UI has no content yet because the data has not arrived for
+the first time (e.g., the automation list on app boot, the detail panel when
+an automation is first selected). Spinners are prohibited as a replacement for
+skeletons in these cases.
+
+In-place mutation feedback (save status indicator, toggle state change, inline
+field updates) MUST NOT use skeletons. Content that is already visible MUST
+remain visible during updates — skeletons MUST NOT replace existing content
+during a save cycle. Use the save status indicator for mutation feedback.
 
 ### Branch Naming
 
@@ -153,4 +166,4 @@ Versioning follows semantic versioning:
 - **MINOR** — new principle or section added, or material expansion
 - **PATCH** — wording clarifications, typo fixes
 
-**Version**: 1.0.0 | **Ratified**: 2026-04-12 | **Last Amended**: 2026-04-12
+**Version**: 1.2.1 | **Ratified**: 2026-04-12 | **Last Amended**: 2026-04-12
