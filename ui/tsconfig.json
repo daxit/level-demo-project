@@ -9,9 +9,10 @@
     "allowImportingTsExtensions": true,
     "types": ["vite/client"],
     "noEmit": true,
-    "verbatimModuleSyntax": true,
+    "verbatimModuleSyntax": false,
+    "isolatedModules": true,
     "moduleDetection": "force",
-    "erasableSyntaxOnly": true,
+    "erasableSyntaxOnly": false,
     "lib": ["esnext", "dom"],
     "jsx": "react-jsx"
   },
