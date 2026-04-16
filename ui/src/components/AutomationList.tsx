@@ -1,13 +1,37 @@
-import { useFragment } from '../gql/fragment-masking';
-import {
-  AutomationDetailFieldsFragmentDoc,
-  type AutomationListFieldsFragment,
-  DeviceEvent,
-  LogicalOperator,
-} from '../gql/graphql';
+import { type AutomationListFieldsFragment } from '../gql/graphql';
+import { useAutomationCard } from '../hooks/useAutomationCard';
 import { useCreateAutomation } from '../hooks/useCreateAutomation';
 import { AutomationCard } from './AutomationCard';
 import { SkeletonCard } from './SkeletonCard';
+
+interface AutomationCardContainerProps {
+  automation: AutomationListFieldsFragment;
+  isSelected: boolean;
+  onSelect: () => void;
+}
+
+function AutomationCardContainer({
+  automation,
+  isSelected,
+  onSelect,
+}: AutomationCardContainerProps) {
+  const { enabled, toggleError, deleteError, deleteLoading, handleToggle, handleDelete } =
+    useAutomationCard({ automation });
+
+  return (
+    <AutomationCard
+      automation={automation}
+      isSelected={isSelected}
+      enabled={enabled}
+      toggleError={toggleError}
+      deleteError={deleteError}
+      deleteLoading={deleteLoading}
+      onSelect={onSelect}
+      onToggle={handleToggle}
+      onDelete={handleDelete}
+    />
+  );
+}
 
 interface AutomationListProps {
   automations: AutomationListFieldsFragment[];
@@ -24,35 +48,21 @@ export function AutomationList({
   selectedId,
   onSelect,
 }: AutomationListProps) {
-  const { createAutomation, loading: createLoading } = useCreateAutomation();
-
-  const handleCreate = async () => {
-    const result = await createAutomation({
-      variables: {
-        input: {
-          name: 'New Automation',
-          enabled: false,
-          trigger: { deviceEvent: { event: DeviceEvent.Online } },
-          conditionGroup: { operator: LogicalOperator.And, conditions: [] },
-          actions: [],
-        },
-      },
-    });
-    if (result.data?.createAutomation) {
-      const created = useFragment(AutomationDetailFieldsFragmentDoc, result.data.createAutomation);
-      onSelect(created.id);
-    }
-  };
+  const { createAutomation, loading: createLoading } = useCreateAutomation({
+    onCreated: (id) => onSelect(id),
+  });
 
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center justify-between border-b border-gray-200 p-4 dark:border-gray-700">
-        <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Automations</h1>
+        <h1 className="text-lg font-semibold tracking-wide text-gray-900 dark:text-gray-100">
+          Automations
+        </h1>
         <button
           type="button"
           disabled={createLoading}
-          onClick={handleCreate}
-          className="rounded bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+          onClick={createAutomation}
+          className="cursor-pointer rounded bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
         >
           {createLoading ? 'Creating...' : 'New Automation'}
         </button>
@@ -85,9 +95,9 @@ export function AutomationList({
         {!loading && !error && automations.length > 0 && (
           <div className="space-y-3 p-4">
             {[...automations]
-              .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+              .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
               .map((automation) => (
-                <AutomationCard
+                <AutomationCardContainer
                   key={automation.id}
                   automation={automation}
                   isSelected={automation.id === selectedId}

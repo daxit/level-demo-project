@@ -1,55 +1,43 @@
 import * as Switch from '@radix-ui/react-switch';
 import { formatDistanceToNow } from 'date-fns';
-import { useState } from 'react';
 
 import type { AutomationListFieldsFragment } from '../gql/graphql';
 
-import { useDeleteAutomation } from '../hooks/useDeleteAutomation';
-import { useUpdateAutomation } from '../hooks/useUpdateAutomation';
 import { cn } from '../lib/cn';
 
-function triggerLabel(typename: string): string {
-  return typename.replace('Trigger', '');
+const TRIGGER_LABEL: Record<string, string> = {
+  DeviceEventTrigger: 'Device Event',
+  ThresholdTrigger: 'Threshold',
+  ScheduleTrigger: 'Schedule',
+};
+
+function triggerLabel(trigger: AutomationListFieldsFragment['trigger']): string {
+  return TRIGGER_LABEL[trigger.__typename] ?? trigger.__typename;
 }
 
 interface AutomationCardProps {
   automation: AutomationListFieldsFragment;
   isSelected: boolean;
+  enabled: boolean;
+  toggleError: string | null;
+  deleteError: string | null;
+  deleteLoading: boolean;
   onSelect: () => void;
+  onToggle: (checked: boolean) => void;
+  onDelete: (e: React.MouseEvent) => void;
 }
 
-export function AutomationCard({ automation, isSelected, onSelect }: AutomationCardProps) {
-  const [toggleError, setToggleError] = useState<string | null>(null);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
-  const [optimisticEnabled, setOptimisticEnabled] = useState<boolean | null>(null);
-
-  const { updateAutomation } = useUpdateAutomation((err) => {
-    setOptimisticEnabled(null);
-    setToggleError(err.message);
-  });
-
-  const { deleteAutomation, loading: deleteLoading } = useDeleteAutomation();
-
-  const enabled = optimisticEnabled ?? automation.enabled;
-
-  const handleToggle = (checked: boolean) => {
-    setToggleError(null);
-    setOptimisticEnabled(checked);
-    updateAutomation({
-      variables: { id: automation.id, input: { enabled: checked } },
-      onCompleted: () => setOptimisticEnabled(null),
-    });
-  };
-
-  const handleDelete = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setDeleteError(null);
-    deleteAutomation({
-      variables: { id: automation.id },
-      onError: (err) => setDeleteError(err.message),
-    });
-  };
-
+export function AutomationCard({
+  automation,
+  isSelected,
+  enabled,
+  toggleError,
+  deleteError,
+  deleteLoading,
+  onSelect,
+  onToggle,
+  onDelete,
+}: AutomationCardProps) {
   return (
     <div
       role="button"
@@ -62,18 +50,25 @@ export function AutomationCard({ automation, isSelected, onSelect }: AutomationC
         }
       }}
       className={cn(
-        'cursor-pointer rounded-lg border p-4 transition-colors',
+        'group cursor-pointer rounded-lg border p-4 transition-colors',
         isSelected
           ? 'border-blue-500 bg-blue-50 dark:border-blue-400 dark:bg-blue-950'
           : 'border-gray-200 bg-white hover:border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-gray-600',
       )}
     >
       <div className="flex items-center justify-between">
-        <h3 className="truncate font-medium text-gray-900 dark:text-gray-100">{automation.name}</h3>
+        <h3
+          className={cn(
+            'truncate font-medium',
+            enabled ? 'text-gray-900 dark:text-gray-100' : 'text-gray-400 dark:text-gray-500',
+          )}
+        >
+          {automation.name}
+        </h3>
         <div onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
           <Switch.Root
             checked={enabled}
-            onCheckedChange={handleToggle}
+            onCheckedChange={onToggle}
             className={cn(
               'relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full transition-colors',
               enabled ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600',
@@ -89,36 +84,52 @@ export function AutomationCard({ automation, isSelected, onSelect }: AutomationC
         </div>
       </div>
 
-      <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-        {triggerLabel(automation.trigger.__typename)}
+      <p className="mt-0.5 text-left text-xs text-gray-400 dark:text-gray-500">
+        {triggerLabel(automation.trigger)}
       </p>
 
       <div className="mt-2 flex items-center gap-2">
-        <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+        <span
+          className={cn(
+            'rounded border px-2 py-0.5 text-xs',
+            automation.conditionsCount === 0
+              ? 'border-gray-100 bg-gray-50 text-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-600'
+              : 'border-gray-200 bg-gray-50 text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300',
+          )}
+        >
           {automation.conditionsCount} conditions
         </span>
-        <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+        <span
+          className={cn(
+            'rounded border px-2 py-0.5 text-xs',
+            automation.actionsCount === 0
+              ? 'border-gray-100 bg-gray-50 text-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-600'
+              : 'border-gray-200 bg-gray-50 text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300',
+          )}
+        >
           {automation.actionsCount} actions
-        </span>
-        <span className="ml-auto text-xs text-gray-400">
-          {formatDistanceToNow(new Date(automation.updatedAt), { addSuffix: true })}
         </span>
       </div>
 
-      {toggleError && <p className="mt-2 text-xs text-red-600 dark:text-red-400">{toggleError}</p>}
-
-      <div className="mt-2 flex justify-end">
+      <div className="mt-2 flex items-center justify-between">
+        <span className="text-xs text-gray-400">
+          Updated {formatDistanceToNow(new Date(automation.updatedAt), { addSuffix: true })}
+        </span>
         <button
           type="button"
           disabled={deleteLoading}
-          onClick={handleDelete}
-          className="rounded px-2 py-1 text-xs text-red-600 hover:bg-red-50 disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-950"
+          onClick={onDelete}
+          className="cursor-pointer rounded px-2 py-1 text-xs text-red-600 opacity-0 transition-opacity hover:bg-red-50 focus-visible:opacity-100 disabled:opacity-50 group-hover:opacity-100 dark:text-red-400 dark:hover:bg-red-950"
         >
           Delete
         </button>
       </div>
 
-      {deleteError && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{deleteError}</p>}
+      {(toggleError || deleteError) && (
+        <p className="mt-3 text-left text-xs text-red-600 dark:text-red-400">
+          {toggleError ?? deleteError}
+        </p>
+      )}
     </div>
   );
 }

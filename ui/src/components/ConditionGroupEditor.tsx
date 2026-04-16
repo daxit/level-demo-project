@@ -1,19 +1,17 @@
-import * as Select from '@radix-ui/react-select';
-import { type Control, Controller, useFieldArray } from 'react-hook-form';
+import { Controller, useFieldArray, useFormContext } from 'react-hook-form';
 
-import type { AutomationFormValues } from './DetailPanel';
+import type { AutomationFormValues } from '../utilities/automationTransform';
 
 import { ComparisonOperator, LogicalOperator } from '../gql/graphql';
 import { ConditionRow } from './ConditionRow';
+import { InlineSelect } from './InlineTokens';
 
 const LOGICAL_OPTIONS = [
-  { value: LogicalOperator.And, label: 'AND' },
-  { value: LogicalOperator.Or, label: 'OR' },
+  { value: LogicalOperator.And, label: 'all' },
+  { value: LogicalOperator.Or, label: 'any' },
 ];
 
 interface ConditionGroupEditorProps {
-  control: Control<AutomationFormValues>;
-  onImmediateSave: () => void;
   namePrefix?: string;
   nestingDepth?: number;
   isRoot?: boolean;
@@ -21,13 +19,12 @@ interface ConditionGroupEditorProps {
 }
 
 export function ConditionGroupEditor({
-  control,
-  onImmediateSave,
   namePrefix = 'conditionGroup',
   nestingDepth = 0,
   isRoot = true,
   onRemoveGroup,
 }: ConditionGroupEditorProps) {
+  const { control } = useFormContext<AutomationFormValues>();
   const childrenName = `${namePrefix}.children` as 'conditionGroup.children';
   const operatorName = `${namePrefix}.operator` as 'conditionGroup.operator';
 
@@ -36,59 +33,36 @@ export function ConditionGroupEditor({
     name: childrenName,
   });
 
+  const cardClass =
+    nestingDepth === 0
+      ? ''
+      : nestingDepth === 1
+        ? 'rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-900/40'
+        : 'rounded-lg border border-gray-200 bg-gray-100 p-3 dark:border-gray-700 dark:bg-gray-800/60';
+
   return (
-    <div className={nestingDepth > 0 ? 'border-l-2 border-gray-200 pl-4 dark:border-gray-600' : ''}>
-      <div className="flex items-center gap-2">
-        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Match</span>
+    <div className={cardClass}>
+      <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-1">
+        <span className="text-sm text-gray-500">If</span>
         <Controller
           name={operatorName}
-          control={control}
           render={({ field }) => (
-            <Select.Root
-              value={field.value}
-              onValueChange={(v) => {
-                field.onChange(v);
-                onImmediateSave();
-              }}
-            >
-              <Select.Trigger className="inline-flex items-center justify-between rounded border border-gray-300 bg-white px-3 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-800">
-                <Select.Value />
-                <Select.Icon className="ml-2 text-gray-400">&#9662;</Select.Icon>
-              </Select.Trigger>
-              <Select.Portal>
-                <Select.Content className="overflow-hidden rounded border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
-                  <Select.Viewport className="p-1">
-                    {LOGICAL_OPTIONS.map((opt) => (
-                      <Select.Item
-                        key={opt.value}
-                        value={opt.value}
-                        className="cursor-pointer rounded px-3 py-1.5 text-sm outline-none data-[highlighted]:bg-blue-50 dark:data-[highlighted]:bg-blue-950"
-                      >
-                        <Select.ItemText>{opt.label}</Select.ItemText>
-                      </Select.Item>
-                    ))}
-                  </Select.Viewport>
-                </Select.Content>
-              </Select.Portal>
-            </Select.Root>
+            <InlineSelect value={field.value} options={LOGICAL_OPTIONS} onChange={field.onChange} />
           )}
         />
-        <span className="text-sm text-gray-500">of the following</span>
+        <span className="text-sm text-gray-500">of the following are true</span>
         {!isRoot && onRemoveGroup && (
           <button
             type="button"
-            onClick={() => {
-              onRemoveGroup();
-              onImmediateSave();
-            }}
-            className="ml-auto rounded px-2 py-1 text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-950"
+            onClick={onRemoveGroup}
+            className="ml-auto text-xs text-gray-300 hover:text-red-400 dark:text-gray-600 dark:hover:text-red-400"
           >
-            Remove Group
+            ✕
           </button>
         )}
       </div>
 
-      <div className="mt-3 space-y-2">
+      <div className="mt-3 space-y-3">
         {fields.map((field, index) => {
           const childPrefix = `${childrenName}.${index}`;
 
@@ -98,8 +72,6 @@ export function ConditionGroupEditor({
             return (
               <ConditionGroupEditor
                 key={field.id}
-                control={control}
-                onImmediateSave={onImmediateSave}
                 namePrefix={childPrefix}
                 nestingDepth={nestingDepth + 1}
                 isRoot={false}
@@ -109,18 +81,12 @@ export function ConditionGroupEditor({
           }
 
           return (
-            <ConditionRow
-              key={field.id}
-              control={control}
-              namePrefix={childPrefix}
-              onRemove={() => remove(index)}
-              onImmediateSave={onImmediateSave}
-            />
+            <ConditionRow key={field.id} namePrefix={childPrefix} onRemove={() => remove(index)} />
           );
         })}
       </div>
 
-      <div className="mt-3 flex gap-2">
+      <div className="mt-3 flex gap-3 border-t border-gray-100 pt-2 dark:border-gray-700">
         <button
           type="button"
           onClick={() => {
@@ -131,11 +97,10 @@ export function ConditionGroupEditor({
               operator: ComparisonOperator.Equals,
               value: '',
             });
-            onImmediateSave();
           }}
-          className="rounded border border-dashed border-gray-300 px-3 py-1.5 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-700 dark:border-gray-600 dark:text-gray-400 dark:hover:border-gray-500"
+          className="text-sm text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
         >
-          + Add Condition
+          + condition
         </button>
         <button
           type="button"
@@ -154,11 +119,10 @@ export function ConditionGroupEditor({
                 },
               ],
             } as unknown as AutomationFormValues['conditionGroup']['children'][number]);
-            onImmediateSave();
           }}
-          className="rounded border border-dashed border-gray-300 px-3 py-1.5 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-700 dark:border-gray-600 dark:text-gray-400 dark:hover:border-gray-500"
+          className="text-sm text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
         >
-          + Add Group
+          + group
         </button>
       </div>
     </div>
