@@ -1,111 +1,93 @@
-import * as Select from '@radix-ui/react-select';
-import { type Control, Controller, useFormState } from 'react-hook-form';
+import { Controller, useFormContext, useWatch } from 'react-hook-form';
 
-import type { AutomationFormValues } from './DetailPanel';
+import type { AutomationFormValues } from '../utilities/automationTransform';
 
 import { ComparisonOperator } from '../gql/graphql';
+import { InlineNumber, InlineSelect, InlineText } from './InlineTokens';
+
+const NUMERIC_OPERATORS = new Set([
+  ComparisonOperator.GreaterThan,
+  ComparisonOperator.LessThan,
+  ComparisonOperator.GreaterThanOrEquals,
+  ComparisonOperator.LessThanOrEquals,
+]);
 
 const OPERATOR_OPTIONS = [
-  { value: ComparisonOperator.Equals, label: '=' },
-  { value: ComparisonOperator.NotEquals, label: '!=' },
+  { value: ComparisonOperator.Equals, label: 'is' },
+  { value: ComparisonOperator.NotEquals, label: 'is not' },
   { value: ComparisonOperator.GreaterThan, label: '>' },
   { value: ComparisonOperator.LessThan, label: '<' },
-  { value: ComparisonOperator.GreaterThanOrEquals, label: '>=' },
-  { value: ComparisonOperator.LessThanOrEquals, label: '<=' },
+  { value: ComparisonOperator.GreaterThanOrEquals, label: '≥' },
+  { value: ComparisonOperator.LessThanOrEquals, label: '≤' },
   { value: ComparisonOperator.Contains, label: 'contains' },
-  { value: ComparisonOperator.NotContains, label: 'not contains' },
+  { value: ComparisonOperator.NotContains, label: "doesn't contain" },
 ];
 
 interface ConditionRowProps {
-  control: Control<AutomationFormValues>;
   namePrefix: string;
   onRemove: () => void;
-  onImmediateSave: () => void;
 }
 
-export function ConditionRow({
-  control,
-  namePrefix,
-  onRemove,
-  onImmediateSave,
-}: ConditionRowProps) {
-  const { errors } = useFormState({ control });
+export function ConditionRow({ namePrefix, onRemove }: ConditionRowProps) {
+  const { control, setValue } = useFormContext<AutomationFormValues>();
+  const operator = useWatch({
+    control,
+    name: `${namePrefix}.operator` as `conditionGroup.children.${number}.operator`,
+  }) as ComparisonOperator;
+  const isNumeric = NUMERIC_OPERATORS.has(operator);
 
   return (
-    <div className="flex items-start gap-2">
+    <div className="group flex flex-wrap items-baseline gap-x-1.5 gap-y-1">
       <Controller
-        name={`${namePrefix}.field` as `conditionGroup.children.${number}.field`}
         control={control}
+        name={`${namePrefix}.field` as `conditionGroup.children.${number}.field`}
         rules={{
           required: 'Field is required',
           validate: (v: string) => v.trim() !== '' || 'Field is required',
         }}
         render={({ field }) => (
-          <div className="flex-1">
-            <input
-              {...field}
-              placeholder="Field"
-              className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-800"
-            />
-          </div>
+          <InlineText value={field.value} onChange={field.onChange} placeholder="field" />
         )}
       />
       <Controller
+        control={control}
         name={`${namePrefix}.operator` as `conditionGroup.children.${number}.operator`}
-        control={control}
         render={({ field }) => (
-          <Select.Root
+          <InlineSelect
             value={field.value}
-            onValueChange={(v) => {
+            options={OPERATOR_OPTIONS}
+            onChange={(v) => {
+              const wasNumeric = NUMERIC_OPERATORS.has(field.value as ComparisonOperator);
+              const willBeNumeric = NUMERIC_OPERATORS.has(v as ComparisonOperator);
+              if (wasNumeric !== willBeNumeric) {
+                setValue(`${namePrefix}.value` as `conditionGroup.children.${number}.value`, '');
+              }
               field.onChange(v);
-              onImmediateSave();
             }}
-          >
-            <Select.Trigger className="inline-flex w-28 items-center justify-between rounded border border-gray-300 bg-white px-2 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-800">
-              <Select.Value />
-              <Select.Icon className="ml-1 text-gray-400">&#9662;</Select.Icon>
-            </Select.Trigger>
-            <Select.Portal>
-              <Select.Content className="overflow-hidden rounded border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
-                <Select.Viewport className="p-1">
-                  {OPERATOR_OPTIONS.map((opt) => (
-                    <Select.Item
-                      key={opt.value}
-                      value={opt.value}
-                      className="cursor-pointer rounded px-2 py-1.5 text-sm outline-none data-[highlighted]:bg-blue-50 dark:data-[highlighted]:bg-blue-950"
-                    >
-                      <Select.ItemText>{opt.label}</Select.ItemText>
-                    </Select.Item>
-                  ))}
-                </Select.Viewport>
-              </Select.Content>
-            </Select.Portal>
-          </Select.Root>
+          />
         )}
       />
       <Controller
-        name={`${namePrefix}.value` as `conditionGroup.children.${number}.value`}
         control={control}
-        rules={{ required: 'Value is required' }}
-        render={({ field }) => (
-          <div className="flex-1">
-            <input
-              {...field}
-              placeholder="Value"
-              className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-800"
+        name={`${namePrefix}.value` as `conditionGroup.children.${number}.value`}
+        render={({ field }) =>
+          isNumeric ? (
+            <InlineNumber
+              value={field.value === '' ? null : Number(field.value)}
+              onChange={(v) => field.onChange(v == null ? '' : String(v))}
+              placeholder="0"
             />
-          </div>
-        )}
+          ) : (
+            <InlineText value={field.value} onChange={field.onChange} placeholder="value" />
+          )
+        }
       />
       <button
         type="button"
-        onClick={() => {
-          onRemove();
-          onImmediateSave();
-        }}
-        className="rounded p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950"
+        onClick={onRemove}
+        className="opacity-0 transition-opacity group-hover:opacity-100 rounded px-1 py-0.5 text-xs text-gray-400 hover:text-red-500 dark:hover:text-red-400"
       >
-        &times;
+        ×
       </button>
     </div>
   );

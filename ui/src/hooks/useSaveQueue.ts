@@ -114,16 +114,6 @@ export function useSaveQueue({ mutateFn }: UseSaveQueueOptions) {
     [clearTimers, executeSave],
   );
 
-  const saveImmediate = useCallback(
-    (payload: UpdateAutomationInput) => {
-      clearTimers();
-      retryAttempt.current = 0;
-      queuedPayload.current = null;
-      executeSave(payload);
-    },
-    [clearTimers, executeSave],
-  );
-
   const retry = useCallback(() => {
     if (retryTimer.current) clearTimeout(retryTimer.current);
     if (countdownTimer.current) clearInterval(countdownTimer.current);
@@ -135,5 +125,15 @@ export function useSaveQueue({ mutateFn }: UseSaveQueueOptions) {
     }
   }, [executeSave]);
 
-  return { saveDebounced, saveImmediate, retry, status, retryCountdown };
+  const cancel = useCallback(() => {
+    clearTimers();
+    inFlight.current = false;
+    queuedPayload.current = null;
+    lastPayload.current = null;
+    retryAttempt.current = 0;
+    setStatus('idle');
+    setRetryCountdown(0);
+  }, [clearTimers]);
+
+  return { saveDebounced, retry, cancel, status, retryCountdown };
 }

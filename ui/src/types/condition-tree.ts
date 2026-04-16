@@ -1,4 +1,6 @@
-import type { ComparisonOperator, ConditionGroupInput, LogicalOperator } from '../gql/graphql';
+import type { ComparisonOperator, ConditionGroupInput } from '../gql/graphql';
+
+import { LogicalOperator } from '../gql/graphql';
 
 export type UIConditionLeaf = {
   type: 'condition';
@@ -17,23 +19,40 @@ export type UIConditionGroup = {
 
 export type UIConditionNode = UIConditionLeaf | UIConditionGroup;
 
+export function isConditionTreeComplete(node: UIConditionGroup): boolean {
+  if (!node.operator) return false;
+  return (node.children ?? []).every((child) => {
+    if (child.type === 'condition') {
+      return child.field.trim() !== '' && child.value.trim() !== '' && !!child.operator;
+    }
+    return isConditionTreeComplete(child);
+  });
+}
+
 export function uiTreeToApiInput(node: UIConditionGroup): ConditionGroupInput {
   return {
-    operator: node.operator,
-    conditions: (node.children ?? []).map((child) => {
-      if (child.type === 'condition') {
+    operator: node.operator || LogicalOperator.And,
+    conditions: (node.children ?? [])
+      .filter((child) => {
+        if (child.type === 'condition') {
+          return child.field.trim() !== '' || child.value.trim() !== '';
+        }
+        return true;
+      })
+      .map((child) => {
+        if (child.type === 'condition') {
+          return {
+            condition: {
+              field: child.field,
+              operator: child.operator,
+              value: child.value,
+            },
+          };
+        }
         return {
-          condition: {
-            field: child.field,
-            operator: child.operator,
-            value: child.value,
-          },
+          group: uiTreeToApiInput(child),
         };
-      }
-      return {
-        group: uiTreeToApiInput(child),
-      };
-    }),
+      }),
   };
 }
 

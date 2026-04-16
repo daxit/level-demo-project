@@ -1,37 +1,29 @@
 import { DndContext, type DragEndEvent, closestCenter } from '@dnd-kit/core';
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import * as Select from '@radix-ui/react-select';
-import { type Control, useFieldArray } from 'react-hook-form';
+import { useFieldArray, useFormContext } from 'react-hook-form';
 
-import type { AutomationFormValues } from './DetailPanel';
+import type { AutomationFormValues } from '../utilities/automationTransform';
 
 import { ActionForm } from './ActionForm';
-
-interface ActionsEditorProps {
-  control: Control<AutomationFormValues>;
-  onImmediateSave: () => void;
-}
 
 type ActionType = 'sendNotification' | 'runScript';
 
 function SortableAction({
   id,
   index,
-  control,
   actionType,
   onRemove,
 }: {
   id: string;
   index: number;
-  control: Control<AutomationFormValues>;
   actionType: ActionType;
   onRemove: () => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id });
 
   const style = {
-    transform: CSS.Transform.toString(transform),
+    transform: CSS.Translate.toString(transform),
     transition,
   };
 
@@ -39,34 +31,43 @@ function SortableAction({
     <div
       ref={setNodeRef}
       style={style}
-      className="rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800"
+      className="group rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800"
     >
-      <div className="mb-2 flex items-center gap-2">
+      <div className="mb-3 flex items-center gap-2">
         <button
           type="button"
           {...attributes}
           {...listeners}
-          className="cursor-grab touch-none text-gray-400 hover:text-gray-600"
+          className="cursor-grab touch-none text-gray-300 hover:text-gray-500 dark:text-gray-600 dark:hover:text-gray-400"
+          aria-label="Drag to reorder"
         >
-          &#8942;&#8942;
+          <svg width="12" height="16" viewBox="0 0 12 16" fill="currentColor">
+            <circle cx="4" cy="3" r="1.5" />
+            <circle cx="8" cy="3" r="1.5" />
+            <circle cx="4" cy="8" r="1.5" />
+            <circle cx="8" cy="8" r="1.5" />
+            <circle cx="4" cy="13" r="1.5" />
+            <circle cx="8" cy="13" r="1.5" />
+          </svg>
         </button>
-        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+        <span className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
           {actionType === 'sendNotification' ? 'Send Notification' : 'Run Script'}
         </span>
         <button
           type="button"
           onClick={onRemove}
-          className="ml-auto rounded p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-950"
+          className="ml-auto cursor-pointer opacity-0 transition-opacity group-hover:opacity-100 rounded px-1 py-0.5 text-xs text-gray-400 hover:text-red-500 dark:hover:text-red-400"
         >
           &times;
         </button>
       </div>
-      <ActionForm control={control} index={index} actionType={actionType} />
+      <ActionForm index={index} actionType={actionType} />
     </div>
   );
 }
 
-export function ActionsEditor({ control, onImmediateSave }: ActionsEditorProps) {
+export function ActionsEditor() {
+  const { control } = useFormContext<AutomationFormValues>();
   const { fields, append, remove, move } = useFieldArray({
     control,
     name: 'actions',
@@ -79,7 +80,6 @@ export function ActionsEditor({ control, onImmediateSave }: ActionsEditorProps) 
       const newIndex = fields.findIndex((f) => f.id === over.id);
       if (oldIndex !== -1 && newIndex !== -1) {
         move(oldIndex, newIndex);
-        onImmediateSave();
       }
     }
   };
@@ -90,61 +90,47 @@ export function ActionsEditor({ control, onImmediateSave }: ActionsEditorProps) 
 
   return (
     <div className="space-y-3">
-      <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <SortableContext items={fields.map((f) => f.id)} strategy={verticalListSortingStrategy}>
-          {fields.map((field, index) => (
-            <SortableAction
-              key={field.id}
-              id={field.id}
-              index={index}
-              control={control}
-              actionType={getActionType(field)}
-              onRemove={() => {
-                remove(index);
-                onImmediateSave();
-              }}
-            />
-          ))}
-        </SortableContext>
-      </DndContext>
+      {fields.length === 0 && (
+        <p className="text-sm text-gray-400 dark:text-gray-500">No actions yet.</p>
+      )}
+      {fields.length > 0 && (
+        <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={fields.map((f) => f.id)} strategy={verticalListSortingStrategy}>
+            {fields.map((field, index) => (
+              <SortableAction
+                key={field.id}
+                id={field.id}
+                index={index}
+                actionType={getActionType(field)}
+                onRemove={() => remove(index)}
+              />
+            ))}
+          </SortableContext>
+        </DndContext>
+      )}
 
-      <Select.Root
-        onValueChange={(v: string) => {
-          if (v === 'sendNotification') {
-            append({
-              sendNotification: { recipients: [], subject: '', body: '' },
-            });
-          } else {
-            append({
-              runScript: { script: '', args: [], timeout: null },
-            });
-          }
-          onImmediateSave();
-        }}
-      >
-        <Select.Trigger className="inline-flex items-center gap-2 rounded border border-dashed border-gray-300 px-3 py-1.5 text-sm text-gray-600 hover:border-gray-400 hover:text-gray-700 dark:border-gray-600 dark:text-gray-400 dark:hover:border-gray-500">
-          + Add Action
-          <Select.Icon className="text-gray-400">&#9662;</Select.Icon>
-        </Select.Trigger>
-        <Select.Portal>
-          <Select.Content className="overflow-hidden rounded border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
-            <Select.Viewport className="p-1">
-              <Select.Item
-                value="sendNotification"
-                className="cursor-pointer rounded px-3 py-2 text-sm outline-none data-[highlighted]:bg-blue-50 dark:data-[highlighted]:bg-blue-950"
-              >
-                <Select.ItemText>Send Notification</Select.ItemText>
-              </Select.Item>
-              <Select.Item
-                value="runScript"
-                className="cursor-pointer rounded px-3 py-2 text-sm outline-none data-[highlighted]:bg-blue-50 dark:data-[highlighted]:bg-blue-950"
-              >
-                <Select.ItemText>Run Script</Select.ItemText>
-              </Select.Item>
-            </Select.Viewport>
-          </Select.Content>
-        </Select.Portal>
-      </Select.Root>
+      <div className="flex gap-3">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            append({ sendNotification: { recipients: [], subject: '', body: '' } });
+          }}
+          className="cursor-pointer text-sm text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
+        >
+          + Send Notification
+        </button>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            append({ runScript: { script: '', args: [], timeout: null } });
+          }}
+          className="cursor-pointer text-sm text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
+        >
+          + Run Script
+        </button>
+      </div>
     </div>
   );
 }
