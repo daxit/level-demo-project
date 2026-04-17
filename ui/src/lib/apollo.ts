@@ -1,8 +1,8 @@
 import { ApolloClient, ApolloLink, HttpLink, InMemoryCache } from '@apollo/client';
 import { CombinedGraphQLErrors } from '@apollo/client/errors';
-import { onError } from '@apollo/client/link/error';
+import { ErrorLink } from '@apollo/client/link/error';
 
-const errorLink = onError(({ error, operation }) => {
+const errorLink = new ErrorLink(({ error, operation }) => {
   if (CombinedGraphQLErrors.is(error)) {
     for (const err of error.errors) {
       console.error(`[GraphQL error] ${operation.operationName}:`, err.message);
