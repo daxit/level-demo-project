@@ -151,7 +151,7 @@ export function formValuesToInput(values: AutomationFormValues): UpdateAutomatio
     return {
       runScript: {
         script: a.runScript!.script,
-        args: a.runScript!.args.length > 0 ? a.runScript!.args : undefined,
+        args: a.runScript?.args?.length ? a.runScript.args : undefined,
         timeout: a.runScript!.timeout,
       },
     };

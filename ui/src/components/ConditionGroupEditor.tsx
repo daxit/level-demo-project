@@ -1,5 +1,7 @@
+import { Plus, X } from 'lucide-react';
 import { Controller, useFieldArray, useFormContext } from 'react-hook-form';
 
+import type { UIConditionGroup, UIConditionLeaf } from '../types/condition-tree';
 import type { AutomationFormValues } from '../utilities/automationTransform';
 
 import { ComparisonOperator, LogicalOperator } from '../gql/graphql';
@@ -55,9 +57,9 @@ export function ConditionGroupEditor({
           <button
             type="button"
             onClick={onRemoveGroup}
-            className="ml-auto text-xs text-gray-300 hover:text-red-400 dark:text-gray-600 dark:hover:text-red-400"
+            className="ml-auto cursor-pointer text-gray-300 hover:text-red-400 dark:text-gray-600 dark:hover:text-red-400"
           >
-            ✕
+            <X size={14} />
           </button>
         )}
       </div>
@@ -66,7 +68,6 @@ export function ConditionGroupEditor({
         {fields.map((field, index) => {
           const childPrefix = `${childrenName}.${index}`;
 
-          // Check if this child is a group by looking at the field data
           const childData = field as Record<string, unknown>;
           if (childData.type === 'group') {
             return (
@@ -90,39 +91,43 @@ export function ConditionGroupEditor({
         <button
           type="button"
           onClick={() => {
-            append({
-              type: 'condition' as const,
+            const leaf: UIConditionLeaf = {
+              type: 'condition',
               id: crypto.randomUUID(),
               field: '',
               operator: ComparisonOperator.Equals,
               value: '',
-            });
+            };
+            append(leaf);
           }}
-          className="text-sm text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
+          className="flex cursor-pointer items-center gap-1 text-sm text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
         >
-          + condition
+          <Plus size={13} />
+          condition
         </button>
         <button
           type="button"
           onClick={() => {
-            append({
-              type: 'group' as const,
+            const group: UIConditionGroup = {
+              type: 'group',
               id: crypto.randomUUID(),
               operator: LogicalOperator.And,
               children: [
                 {
-                  type: 'condition' as const,
+                  type: 'condition',
                   id: crypto.randomUUID(),
                   field: '',
                   operator: ComparisonOperator.Equals,
                   value: '',
                 },
               ],
-            } as unknown as AutomationFormValues['conditionGroup']['children'][number]);
+            };
+            append(group);
           }}
-          className="text-sm text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
+          className="flex cursor-pointer items-center gap-1 text-sm text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
         >
-          + group
+          <Plus size={13} />
+          group
         </button>
       </div>
     </div>

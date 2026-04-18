@@ -39,19 +39,17 @@ export function useAutomationForm({ automationId }: UseAutomationFormOptions) {
     [updateAutomation, automationId],
   );
 
-  const { saveDebounced, retry, cancel, status, retryCountdown } = useSaveQueue({ mutateFn });
+  const { saveDebounced, retry, cancel, status, retryCountdown, isDebouncing, isSaving } =
+    useSaveQueue({
+      mutateFn,
+    });
 
-  // Hydrate form when server data changes. automation is reference-stable (see useAutomation)
-  // so this only fires when the server actually returns new data.
   useEffect(() => {
-    if (automation) {
-      reset(automationToFormValues(automation));
+    if (automation && !isDebouncing.current && !isSaving.current) {
+      reset(automationToFormValues(automation), { keepDirtyValues: true });
     }
-  }, [automation, reset]);
+  }, [automation?.id, reset, isDebouncing, isSaving]);
 
-  // Save on user-driven form changes. The watch callback receives { type } as its second argument:
-  // type === 'change' for user input, type === undefined for programmatic reset()/setValue().
-  // This is the documented RHF pattern for side-effect subscriptions.
   useEffect(() => {
     const { unsubscribe } = watch((values, { type }) => {
       if (type !== 'change') return;

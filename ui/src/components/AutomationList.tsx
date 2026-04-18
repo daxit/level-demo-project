@@ -39,6 +39,7 @@ interface AutomationListProps {
   error: Error | undefined;
   selectedId: string | undefined;
   onSelect: (id: string) => void;
+  onCreated: (id: string) => void;
 }
 
 export function AutomationList({
@@ -47,10 +48,9 @@ export function AutomationList({
   error,
   selectedId,
   onSelect,
+  onCreated,
 }: AutomationListProps) {
-  const { createAutomation, loading: createLoading } = useCreateAutomation({
-    onCreated: (id) => onSelect(id),
-  });
+  const { createAutomation, loading: createLoading } = useCreateAutomation({ onCreated });
 
   return (
     <div className="flex h-full flex-col">

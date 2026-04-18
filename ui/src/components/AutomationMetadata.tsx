@@ -7,7 +7,6 @@ import { cn } from '../lib/cn';
 import { SaveStatus } from './SaveStatus';
 
 interface AutomationMetadataProps {
-  automationId: string;
   automation: AutomationDetailFieldsFragment;
   saveStatus: 'idle' | 'debouncing' | 'saving' | 'saved' | 'retrying' | 'failed';
   retryCountdown: number;
@@ -20,10 +19,6 @@ const TRIGGER_LABEL: Record<string, string> = {
   ThresholdTrigger: 'Threshold',
   ScheduleTrigger: 'Schedule',
 };
-
-function triggerTypeLabel(trigger: AutomationDetailFieldsFragment['trigger']): string {
-  return TRIGGER_LABEL[trigger.__typename] ?? trigger.__typename;
-}
 
 export function AutomationMetadata({
   automation,
@@ -79,7 +74,7 @@ export function AutomationMetadata({
           {automation.enabled ? 'Enabled' : 'Disabled'}
         </span>
         <span className="rounded border border-gray-200 bg-gray-50 px-2 py-0.5 text-xs text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
-          {triggerTypeLabel(automation.trigger)}
+          {TRIGGER_LABEL[automation.trigger.__typename] ?? automation.trigger.__typename}
         </span>
         <span
           className={cn(

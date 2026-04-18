@@ -4,7 +4,7 @@ import type { UpdateAutomationInput } from '../gql/graphql';
 
 type SaveStatus = 'idle' | 'debouncing' | 'saving' | 'saved' | 'retrying' | 'failed';
 
-const DEBOUNCE_MS = 600;
+const DEBOUNCE_MS = 1500;
 const RETRY_DELAYS = [2000, 4000, 8000];
 const SAVED_DISPLAY_MS = 3000;
 
@@ -17,10 +17,12 @@ export function useSaveQueue({ mutateFn }: UseSaveQueueOptions) {
   const [retryCountdown, setRetryCountdown] = useState(0);
 
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isDebouncing = useRef(false);
   const retryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const countdownTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const savedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inFlight = useRef(false);
+  const isSaving = useRef(false);
   const queuedPayload = useRef<UpdateAutomationInput | null>(null);
   const lastPayload = useRef<UpdateAutomationInput | null>(null);
   const retryAttempt = useRef(0);
@@ -44,12 +46,14 @@ export function useSaveQueue({ mutateFn }: UseSaveQueueOptions) {
       }
 
       inFlight.current = true;
+      isSaving.current = true;
       lastPayload.current = payload;
       setStatus('saving');
 
       try {
         await mutateFn(payload);
         inFlight.current = false;
+        isSaving.current = false;
         retryAttempt.current = 0;
 
         if (queuedPayload.current) {
@@ -62,6 +66,7 @@ export function useSaveQueue({ mutateFn }: UseSaveQueueOptions) {
         }
       } catch {
         inFlight.current = false;
+        isSaving.current = false;
 
         if (queuedPayload.current) {
           const next = queuedPayload.current;
@@ -107,7 +112,9 @@ export function useSaveQueue({ mutateFn }: UseSaveQueueOptions) {
       queuedPayload.current = null;
       setStatus('debouncing');
 
+      isDebouncing.current = true;
       debounceTimer.current = setTimeout(() => {
+        isDebouncing.current = false;
         executeSave(payload);
       }, DEBOUNCE_MS);
     },
@@ -135,5 +142,5 @@ export function useSaveQueue({ mutateFn }: UseSaveQueueOptions) {
     setRetryCountdown(0);
   }, [clearTimers]);
 
-  return { saveDebounced, retry, cancel, status, retryCountdown };
+  return { saveDebounced, retry, cancel, status, retryCountdown, isDebouncing, isSaving };
 }

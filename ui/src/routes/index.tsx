@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 import { AutomationList } from '../components/AutomationList';
 import { DetailPanel } from '../components/DetailPanel';
@@ -18,20 +18,23 @@ function IndexPage() {
   const navigate = useNavigate({ from: '/' });
   const { automations, loading, error } = useAutomations();
 
+  const pendingNewId = useRef<string | null>(null);
+
   const isDetailOpen = id !== undefined;
   const selectedAutomation = automations.find((a) => a.id === id);
 
   useEffect(() => {
+    if (id && pendingNewId.current === id) return;
     if (id && !loading && automations.length > 0 && !selectedAutomation) {
       navigate({ search: { id: undefined } });
     }
-  }, [id, loading, automations.length, selectedAutomation, navigate]);
+  }, [id, loading, automations, selectedAutomation, navigate]);
 
   return (
     <div className="flex h-screen">
       <div
         className={cn(
-          'overflow-y-auto transition-all',
+          'transition-all',
           isDetailOpen ? 'w-80 shrink-0 border-r border-gray-200 dark:border-gray-700' : 'flex-1',
         )}
       >
@@ -41,12 +44,16 @@ function IndexPage() {
           error={error}
           selectedId={id}
           onSelect={(automationId) => navigate({ search: { id: automationId } })}
+          onCreated={(automationId) => {
+            pendingNewId.current = automationId;
+            navigate({ search: { id: automationId } });
+          }}
         />
       </div>
       {isDetailOpen && (
         <DetailPanel
+          key={id}
           automationId={id}
-          automationName={selectedAutomation?.name}
           onClose={() => navigate({ search: { id: undefined } })}
         />
       )}
