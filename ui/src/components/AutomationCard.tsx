@@ -11,10 +11,6 @@ const TRIGGER_LABEL: Record<string, string> = {
   ScheduleTrigger: 'Schedule',
 };
 
-function triggerLabel(trigger: AutomationListFieldsFragment['trigger']): string {
-  return TRIGGER_LABEL[trigger.__typename] ?? trigger.__typename;
-}
-
 interface AutomationCardProps {
   automation: AutomationListFieldsFragment;
   isSelected: boolean;
@@ -85,7 +81,7 @@ export function AutomationCard({
       </div>
 
       <p className="mt-0.5 text-left text-xs text-gray-400 dark:text-gray-500">
-        {triggerLabel(automation.trigger)}
+        {TRIGGER_LABEL[automation.trigger.__typename] ?? automation.trigger.__typename}
       </p>
 
       <div className="mt-2 flex items-center gap-2">

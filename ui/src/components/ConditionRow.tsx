@@ -1,3 +1,4 @@
+import { X } from 'lucide-react';
 import { Controller, useFormContext, useWatch } from 'react-hook-form';
 
 import type { AutomationFormValues } from '../utilities/automationTransform';
@@ -85,9 +86,9 @@ export function ConditionRow({ namePrefix, onRemove }: ConditionRowProps) {
       <button
         type="button"
         onClick={onRemove}
-        className="opacity-0 transition-opacity group-hover:opacity-100 rounded px-1 py-0.5 text-xs text-gray-400 hover:text-red-500 dark:hover:text-red-400"
+        className="cursor-pointer rounded p-0.5 opacity-0 transition-opacity group-hover:opacity-100 text-gray-400 hover:text-red-500 dark:hover:text-red-400"
       >
-        ×
+        <X size={14} />
       </button>
     </div>
   );

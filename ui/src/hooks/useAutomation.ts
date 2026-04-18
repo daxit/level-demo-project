@@ -14,13 +14,8 @@ export function useAutomation(id: string | undefined) {
   const unmasked = raw ? useFragment(AutomationDetailFieldsFragmentDoc, raw) : null;
 
   // Stabilize the reference: useFragment is a pure cast that returns a new object every render.
-  // Keying on id+updatedAt means consumers get a stable reference unless data actually changed,
-  // so useEffect deps that include this object are correct without eslint suppressions.
-  const automation = useMemo(
-    () => unmasked,
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [unmasked?.id, unmasked?.updatedAt],
-  );
+  // Keying on id+updatedAt means consumers get a stable reference unless data actually changed.
+  const automation = useMemo(() => unmasked, [unmasked?.id, unmasked?.updatedAt]);
 
   return { automation, loading, error };
 }
