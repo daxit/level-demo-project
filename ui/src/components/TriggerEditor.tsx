@@ -44,7 +44,7 @@ const TRIGGER_TYPE_SWITCH_OPTIONS: { value: TriggerType; label: string }[] = [
 ];
 
 export function TriggerEditor() {
-  const { control, setValue } = useFormContext<AutomationFormValues>();
+  const { control, setValue, getValues } = useFormContext<AutomationFormValues>();
   const trigger = useWatch({ control, name: 'trigger' });
   const { errors } = useFormState({
     control,
@@ -93,10 +93,18 @@ export function TriggerEditor() {
   return (
     <div>
       <p className="flex flex-wrap items-baseline gap-x-1.5 gap-y-1 text-sm text-gray-800 dark:text-gray-200">
-        <InlineSelect
-          value={currentType}
-          options={TRIGGER_TYPE_SWITCH_OPTIONS}
-          onChange={handleTypeChange}
+        <Controller
+          name="trigger"
+          render={({ field: f }) => (
+            <InlineSelect
+              value={currentType}
+              options={TRIGGER_TYPE_SWITCH_OPTIONS}
+              onChange={(newType) => {
+                handleTypeChange(newType);
+                f.onChange(getValues('trigger'));
+              }}
+            />
+          )}
         />
 
         {currentType === 'deviceEvent' && (
