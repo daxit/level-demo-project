@@ -132,6 +132,15 @@ export function useSaveQueue({ mutateFn }: UseSaveQueueOptions) {
     }
   }, [executeSave]);
 
+  const cancelDebounce = useCallback(() => {
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
+      debounceTimer.current = null;
+    }
+    isDebouncing.current = false;
+    if (!inFlight.current) setStatus('idle');
+  }, []);
+
   const cancel = useCallback(() => {
     clearTimers();
     inFlight.current = false;
@@ -142,5 +151,14 @@ export function useSaveQueue({ mutateFn }: UseSaveQueueOptions) {
     setRetryCountdown(0);
   }, [clearTimers]);
 
-  return { saveDebounced, retry, cancel, status, retryCountdown, isDebouncing, isSaving };
+  return {
+    saveDebounced,
+    retry,
+    cancel,
+    cancelDebounce,
+    status,
+    retryCountdown,
+    isDebouncing,
+    isSaving,
+  };
 }
