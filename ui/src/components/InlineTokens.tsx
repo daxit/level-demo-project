@@ -1,4 +1,5 @@
 import * as Select from '@radix-ui/react-select';
+import { ChevronDown } from 'lucide-react';
 
 export function InlineSelect<T extends string>({
   value,
@@ -19,16 +20,7 @@ export function InlineSelect<T extends string>({
       >
         <Select.Value />
         <Select.Icon className="opacity-0 transition-opacity group-hover:opacity-100 text-blue-400 dark:text-blue-500">
-          <svg width="10" height="10" viewBox="0 0 10 10">
-            <path
-              d="M2 3.5L5 6.5L8 3.5"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              fill="none"
-            />
-          </svg>
+          <ChevronDown size={12} />
         </Select.Icon>
       </Select.Trigger>
       <Select.Portal>

@@ -1,3 +1,4 @@
+import { X } from 'lucide-react';
 import { useCallback } from 'react';
 import { FormProvider } from 'react-hook-form';
 
@@ -35,7 +36,7 @@ export function DetailPanel({ automationId, onClose }: DetailPanelProps) {
           onClick={onClose}
           className="flex h-8 w-8 cursor-pointer items-center justify-center rounded text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200"
         >
-          &times;
+          <X size={16} />
         </button>
       </div>
 

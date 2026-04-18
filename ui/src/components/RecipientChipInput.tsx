@@ -1,3 +1,4 @@
+import { AlertTriangle, X } from 'lucide-react';
 import { useState, useRef } from 'react';
 import { z } from 'zod';
 
@@ -61,8 +62,8 @@ export function RecipientChipInput({
           >
             {email}
             {!valid && (
-              <span className="text-amber-500 dark:text-amber-400" title="Invalid email address">
-                ⚠
+              <span title="Invalid email address">
+                <AlertTriangle size={11} className="text-amber-500 dark:text-amber-400" />
               </span>
             )}
             <button
@@ -73,7 +74,7 @@ export function RecipientChipInput({
               }}
               className="ml-0.5 cursor-pointer opacity-60 hover:opacity-100"
             >
-              &times;
+              <X size={11} />
             </button>
           </span>
         );

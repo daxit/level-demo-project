@@ -1,4 +1,5 @@
 import { formatDistanceToNow } from 'date-fns';
+import { Trash2 } from 'lucide-react';
 import { Controller } from 'react-hook-form';
 
 import type { AutomationDetailFieldsFragment } from '../gql/graphql';
@@ -44,8 +45,9 @@ export function AutomationMetadata({
         <button
           type="button"
           onClick={onDelete}
-          className="cursor-pointer rounded px-2 py-1 text-xs text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950"
+          className="inline-flex cursor-pointer items-center gap-1 rounded px-2 py-1 text-xs text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950"
         >
+          <Trash2 size={12} />
           Delete
         </button>
       </div>
