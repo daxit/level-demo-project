@@ -1,3 +1,5 @@
+import { Plus } from 'lucide-react';
+
 import { type AutomationListFieldsFragment } from '../gql/graphql';
 import { useAutomationCard } from '../hooks/useAutomationCard';
 import { useCreateAutomation } from '../hooks/useCreateAutomation';
@@ -62,9 +64,15 @@ export function AutomationList({
           type="button"
           disabled={createLoading}
           onClick={createAutomation}
-          className="cursor-pointer rounded bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+          className="inline-flex cursor-pointer items-center gap-1.5 rounded bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
         >
-          {createLoading ? 'Creating...' : 'New Automation'}
+          {createLoading ? (
+            'Creating...'
+          ) : (
+            <>
+              <Plus size={14} /> New Automation
+            </>
+          )}
         </button>
       </div>
 

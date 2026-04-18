@@ -1,5 +1,6 @@
 import * as Switch from '@radix-ui/react-switch';
 import { formatDistanceToNow } from 'date-fns';
+import { Trash2 } from 'lucide-react';
 
 import type { AutomationListFieldsFragment } from '../gql/graphql';
 
@@ -115,8 +116,9 @@ export function AutomationCard({
           type="button"
           disabled={deleteLoading}
           onClick={onDelete}
-          className="cursor-pointer rounded px-2 py-1 text-xs text-red-600 opacity-0 transition-opacity hover:bg-red-50 focus-visible:opacity-100 disabled:opacity-50 group-hover:opacity-100 dark:text-red-400 dark:hover:bg-red-950"
+          className="inline-flex cursor-pointer items-center gap-1 rounded px-2 py-1 text-xs text-red-600 opacity-0 transition-opacity hover:bg-red-50 focus-visible:opacity-100 disabled:opacity-50 group-hover:opacity-100 dark:text-red-400 dark:hover:bg-red-950"
         >
+          <Trash2 size={12} />
           Delete
         </button>
       </div>

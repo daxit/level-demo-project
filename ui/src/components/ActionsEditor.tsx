@@ -1,5 +1,6 @@
 import { DndContext, type DragEndEvent, closestCenter } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { Plus } from 'lucide-react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 
 import type { AutomationFormValues } from '../utilities/automationTransform';
@@ -66,18 +67,20 @@ export function ActionsEditor() {
           onClick={() => {
             append({ sendNotification: { recipients: [], subject: '', body: '' } });
           }}
-          className="cursor-pointer text-sm text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
+          className="flex cursor-pointer items-center gap-1 text-sm text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
         >
-          + Send Notification
+          <Plus size={13} />
+          Send Notification
         </button>
         <button
           type="button"
           onClick={() => {
             append({ runScript: { script: '', args: [], timeout: null } });
           }}
-          className="cursor-pointer text-sm text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
+          className="flex cursor-pointer items-center gap-1 text-sm text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
         >
-          + Run Script
+          <Plus size={13} />
+          Run Script
         </button>
       </div>
     </div>
