@@ -10,15 +10,17 @@ interface AutomationCardContainerProps {
   automation: AutomationListFieldsFragment;
   isSelected: boolean;
   onSelect: () => void;
+  onDeleted: () => void;
 }
 
 function AutomationCardContainer({
   automation,
   isSelected,
   onSelect,
+  onDeleted,
 }: AutomationCardContainerProps) {
   const { enabled, toggleError, deleteError, deleteLoading, handleToggle, handleDelete } =
-    useAutomationCard({ automation });
+    useAutomationCard({ automation, onDeleted });
 
   return (
     <AutomationCard
@@ -42,6 +44,7 @@ interface AutomationListProps {
   selectedId: string | undefined;
   onSelect: (id: string) => void;
   onCreated: (id: string) => void;
+  onDelete: (deletedId: string) => void;
 }
 
 export function AutomationList({
@@ -51,6 +54,7 @@ export function AutomationList({
   selectedId,
   onSelect,
   onCreated,
+  onDelete,
 }: AutomationListProps) {
   const { createAutomation, loading: createLoading } = useCreateAutomation({ onCreated });
 
@@ -110,6 +114,7 @@ export function AutomationList({
                   automation={automation}
                   isSelected={automation.id === selectedId}
                   onSelect={() => onSelect(automation.id)}
+                  onDeleted={() => onDelete(automation.id)}
                 />
               ))}
           </div>

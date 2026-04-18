@@ -1,14 +1,16 @@
 import { useState } from 'react';
 
 import type { AutomationListFieldsFragment } from '../gql/graphql';
+
 import { useDeleteAutomation } from './useDeleteAutomation';
 import { useUpdateAutomation } from './useUpdateAutomation';
 
 interface UseAutomationCardOptions {
   automation: AutomationListFieldsFragment;
+  onDeleted?: () => void;
 }
 
-export function useAutomationCard({ automation }: UseAutomationCardOptions) {
+export function useAutomationCard({ automation, onDeleted }: UseAutomationCardOptions) {
   const [toggleError, setToggleError] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [optimisticEnabled, setOptimisticEnabled] = useState<boolean | null>(null);
@@ -35,6 +37,7 @@ export function useAutomationCard({ automation }: UseAutomationCardOptions) {
     setDeleteError(null);
     deleteAutomation({
       variables: { id: automation.id },
+      onCompleted: () => onDeleted?.(),
       onError: (err) => setDeleteError(err.message),
     });
   };

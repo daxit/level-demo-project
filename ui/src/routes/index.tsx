@@ -30,6 +30,15 @@ function IndexPage() {
     }
   }, [id, loading, automations, selectedAutomation, navigate]);
 
+  const handleDelete = (deletedId: string) => {
+    if (deletedId !== id) return;
+    const sorted = [...automations].sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    );
+    const next = sorted.find((a) => a.id !== deletedId);
+    navigate({ search: { id: next?.id } });
+  };
+
   return (
     <div className="flex h-screen">
       <div
@@ -48,6 +57,7 @@ function IndexPage() {
             pendingNewId.current = automationId;
             navigate({ search: { id: automationId } });
           }}
+          onDelete={handleDelete}
         />
       </div>
       {isDetailOpen && (
