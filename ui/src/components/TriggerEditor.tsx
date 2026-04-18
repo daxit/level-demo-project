@@ -1,4 +1,5 @@
-import { Controller, useFormContext, useWatch } from 'react-hook-form';
+import { Plus, X } from 'lucide-react';
+import { Controller, useFormContext, useFormState, useWatch } from 'react-hook-form';
 
 import type { AutomationFormValues } from '../utilities/automationTransform';
 
@@ -45,6 +46,10 @@ const TRIGGER_TYPE_SWITCH_OPTIONS: { value: TriggerType; label: string }[] = [
 export function TriggerEditor() {
   const { control, setValue } = useFormContext<AutomationFormValues>();
   const trigger = useWatch({ control, name: 'trigger' });
+  const { errors } = useFormState({
+    control,
+    name: ['trigger.schedule.interval', 'trigger.threshold.value'],
+  });
   const currentType: TriggerType = trigger?.threshold
     ? 'threshold'
     : trigger?.schedule
@@ -55,7 +60,11 @@ export function TriggerEditor() {
     if (newType === currentType) return;
     switch (newType) {
       case 'deviceEvent':
-        setValue('trigger', { deviceEvent: { event: DeviceEvent.Online } }, { shouldDirty: true });
+        setValue(
+          'trigger',
+          { deviceEvent: { event: DeviceEvent.Online } },
+          { shouldDirty: true, shouldValidate: true },
+        );
         break;
       case 'threshold':
         setValue(
@@ -68,14 +77,14 @@ export function TriggerEditor() {
               duration: null,
             },
           },
-          { shouldDirty: true },
+          { shouldDirty: true, shouldValidate: true },
         );
         break;
       case 'schedule':
         setValue(
           'trigger',
           { schedule: { frequency: Frequency.Minutes, interval: 5 } },
-          { shouldDirty: true },
+          { shouldDirty: true, shouldValidate: true },
         );
         break;
     }
@@ -92,8 +101,13 @@ export function TriggerEditor() {
 
         {currentType === 'deviceEvent' && (
           <>
-            <span className="text-gray-500">a device goes</span>
+            <span className="text-gray-500">
+              {trigger?.deviceEvent?.event === DeviceEvent.HardwareChange
+                ? 'a device has a'
+                : 'a device goes'}
+            </span>
             <Controller
+              key={trigger?.deviceEvent?.event}
               name="trigger.deviceEvent.event"
               render={({ field: f }) => (
                 <InlineSelect
@@ -122,8 +136,17 @@ export function TriggerEditor() {
             />
             <Controller
               name="trigger.threshold.value"
+              rules={{
+                required: 'Threshold value is required',
+                validate: (v) =>
+                  (v != null && !isNaN(v)) || 'Threshold value must be a valid number',
+              }}
               render={({ field: f }) => (
-                <InlineNumber value={f.value as number} onChange={(v) => f.onChange(v ?? 0)} />
+                <InlineNumber
+                  value={f.value as number}
+                  onChange={(v) => f.onChange(v)}
+                  autoWidth={{ min: '5ch', max: '20ch' }}
+                />
               )}
             />
             <Controller
@@ -137,18 +160,19 @@ export function TriggerEditor() {
                     <button
                       type="button"
                       onClick={() => f.onChange(null)}
-                      className="cursor-pointer text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                      className="cursor-pointer text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                     >
-                      ×
+                      <X size={12} />
                     </button>
                   </>
                 ) : (
                   <button
                     type="button"
                     onClick={() => f.onChange(1)}
-                    className="cursor-pointer text-xs text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
+                    className="flex cursor-pointer items-center gap-1 text-xs text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
                   >
-                    + for duration
+                    <Plus size={12} />
+                    for duration
                   </button>
                 )
               }
@@ -160,12 +184,19 @@ export function TriggerEditor() {
           <>
             <Controller
               name="trigger.schedule.interval"
+              rules={{
+                required: 'Interval is required',
+                min: { value: 1, message: 'Must be at least 1' },
+                max: { value: 999, message: 'Must be 999 or less' },
+              }}
               render={({ field: f }) => (
                 <InlineNumber
                   value={f.value as number}
-                  onChange={(v) => f.onChange(v ?? 1)}
-                  min={1}
-                  max={999}
+                  onChange={(v) => f.onChange(v)}
+                  onBlur={() => {
+                    if (f.value == null || f.value === '') f.onChange(1);
+                  }}
+                  width="10ch"
                 />
               )}
             />
@@ -183,6 +214,16 @@ export function TriggerEditor() {
         {currentType === 'threshold' && 'Fires while the metric continuously meets the condition.'}
         {currentType === 'schedule' && 'Fires on a repeating schedule.'}
       </p>
+      {currentType === 'schedule' && errors.trigger?.schedule?.interval && (
+        <p className="mt-1 text-xs text-red-600 dark:text-red-400">
+          {errors.trigger.schedule.interval.message}
+        </p>
+      )}
+      {currentType === 'threshold' && errors.trigger?.threshold?.value && (
+        <p className="mt-1 text-xs text-red-600 dark:text-red-400">
+          {errors.trigger.threshold.value.message}
+        </p>
+      )}
     </div>
   );
 }

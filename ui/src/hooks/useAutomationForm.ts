@@ -7,6 +7,7 @@ import {
   formValuesToInput,
   type AutomationFormValues,
 } from '../utilities/automationTransform';
+import { isAutomationFormValid } from '../utilities/formValidation';
 import { useAutomation } from './useAutomation';
 import { useSaveQueue } from './useSaveQueue';
 import { useUpdateAutomation } from './useUpdateAutomation';
@@ -20,6 +21,7 @@ export function useAutomationForm({ automationId }: UseAutomationFormOptions) {
   const { updateAutomation } = useUpdateAutomation();
 
   const form = useForm<AutomationFormValues>({
+    mode: 'onChange',
     defaultValues: {
       name: '',
       description: null,
@@ -39,10 +41,18 @@ export function useAutomationForm({ automationId }: UseAutomationFormOptions) {
     [updateAutomation, automationId],
   );
 
-  const { saveDebounced, retry, cancel, status, retryCountdown, isDebouncing, isSaving } =
-    useSaveQueue({
-      mutateFn,
-    });
+  const {
+    saveDebounced,
+    retry,
+    cancel,
+    cancelDebounce,
+    status,
+    retryCountdown,
+    isDebouncing,
+    isSaving,
+  } = useSaveQueue({
+    mutateFn,
+  });
 
   useEffect(() => {
     if (automation && !isDebouncing.current && !isSaving.current) {
@@ -54,10 +64,14 @@ export function useAutomationForm({ automationId }: UseAutomationFormOptions) {
     const { unsubscribe } = watch((values, { type }) => {
       if (type !== 'change') return;
       if (!values.conditionGroup) return;
+      if (!isAutomationFormValid(values)) {
+        cancelDebounce();
+        return;
+      }
       saveDebounced(formValuesToInput(values as AutomationFormValues));
     });
     return unsubscribe;
-  }, [watch, saveDebounced]);
+  }, [watch, saveDebounced, cancelDebounce]);
 
   return {
     form,

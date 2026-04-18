@@ -57,16 +57,26 @@ export function InlineSelect<T extends string>({
 export function InlineNumber({
   value,
   onChange,
+  onBlur,
   min,
   max,
   placeholder,
+  width = '6ch',
+  autoWidth,
 }: {
   value: number | null | '';
   onChange: (v: number | null) => void;
+  onBlur?: () => void;
   min?: number;
   max?: number;
   placeholder?: string;
+  width?: string;
+  autoWidth?: { min: string; max: string };
 }) {
+  const dynamicWidth = autoWidth
+    ? `clamp(${autoWidth.min}, ${String(value ?? '').length + 4}ch, ${autoWidth.max})`
+    : width;
+
   return (
     <input
       type="number"
@@ -76,7 +86,9 @@ export function InlineNumber({
       value={value ?? ''}
       placeholder={placeholder}
       onChange={(e) => onChange(e.target.value === '' ? null : Number(e.target.value))}
-      className="inline-block w-[6ch] rounded-sm border-b border-blue-200 px-1.5 py-1 text-sm text-blue-700 hover:bg-blue-50 focus:bg-blue-50 focus:outline-none dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:focus:bg-blue-950"
+      onBlur={onBlur}
+      style={{ width: dynamicWidth }}
+      className="inline-block rounded-sm border-b border-blue-200 px-1.5 py-1 text-sm text-blue-700 hover:bg-blue-50 focus:bg-blue-50 focus:outline-none dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950 dark:focus:bg-blue-950"
     />
   );
 }
